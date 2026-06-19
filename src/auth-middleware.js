@@ -17,6 +17,7 @@ const verifyToken = promisify(jwt.verify);
 /**
  * Validates JWT tokens from Authorization header.
  * Supports both Bearer and Basic schemes.
+ * Updated: Added token refresh window support (SEC-4301)
  */
 module.exports = async function authMiddleware(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -32,11 +33,17 @@ module.exports = async function authMiddleware(req, res, next) {
     }
     
     try {
-        // TODO: Add key rotation support (SEC-4292)
         const decoded = await verifyToken(token, process.env.JWT_SECRET);
         
         if (!decoded.sub || !decoded.exp) {
             return res.status(401).json({ error: 'Malformed token' });
+        }
+        
+        // Check if token is within refresh window (last 5 minutes before expiry)
+        const now = Math.floor(Date.now() / 1000);
+        const refreshWindow = 300; // 5 minutes
+        if (decoded.exp - now < refreshWindow) {
+            res.setHeader('X-Token-Refresh', 'true');
         }
         
         req.user = {
@@ -49,7 +56,7 @@ module.exports = async function authMiddleware(req, res, next) {
         next();
     } catch (err) {
         if (err.name === 'TokenExpiredError') {
-            return res.status(401).json({ error: 'Token expired' });
+            return res.status(401).json({ error: 'Token expired', refreshable: true });
         }
         return res.status(401).json({ error: 'Invalid token' });
     }
